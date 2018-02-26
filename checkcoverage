@@ -1,0 +1,63 @@
+#!/bin/bash
+#HRP deletion detection script ver 0.2 (changed from samtools bedcov to pysamstats at coverage of HRP and neighboring gene)
+#Required text file: input-namelocat.txt which contains "isolate name" (tab or space) "file location" in the same line
+#Required program: pysam 0.11.2.2, pysamstats 1.0.1
+
+#Paths#
+INPUT="/media/xifai/RAVEN/Outfiles2/input-namelocat.txt"
+REFFILE="/media/xifai/RAVEN/Ref/Pf3D7_v3.fa"
+
+#Parameters#
+readarray PRM < ${INPUT}
+AMOUNT=$(wc -l ${INPUT} | cut -f1 -d " ")
+CUTOFF=0.1
+#CUTOFF is the normalized coverage cut point for flagging an exon as suspected deletion
+
+#Set reference#
+for (( I = 0; I < ${AMOUNT}; I++ ))
+do
+  NAME=$(echo ${PRM[${I}]} | cut -f1 -d " ")
+  LOCAT=$(echo ${PRM[${I}]} | cut -f2 -d " ")
+
+  pysamstats --fasta ${REFFILE} --pad --type coverage_binned --max-depth=1000000 --chromosome=Pf3D7_01_v3 --start=92901 --end=575900 --output=${NAME}_covchr01.tab ${LOCAT}
+  pysamstats --fasta ${REFFILE} --pad --type coverage_binned --max-depth=1000000 --chromosome=Pf3D7_02_v3 --start=105801 --end=862500 --output=${NAME}_covchr02.tab ${LOCAT}
+  pysamstats --fasta ${REFFILE} --pad --type coverage_binned --max-depth=1000000 --chromosome=Pf3D7_03_v3 --start=70631 --end=1003060 --output=${NAME}_covchr03.tab ${LOCAT}
+  pysamstats --fasta ${REFFILE} --pad --type coverage_binned --max-depth=1000000 --chromosome=Pf3D7_09_v3 --start=79101 --end=1473560 --output=${NAME}_covchr09.tab ${LOCAT}
+  pysamstats --fasta ${REFFILE} --pad --type coverage_binned --max-depth=1000000 --chromosome=Pf3D7_10_v3 --start=68971 --end=1571815 --output=${NAME}_covchr10.tab ${LOCAT}
+  pysamstats --fasta ${REFFILE} --pad --type coverage_binned --max-depth=1000000 --chromosome=Pf3D7_11_v3 --start=110001 --end=2003320 --output=${NAME}_covchr11.tab ${LOCAT}
+  pysamstats --fasta ${REFFILE} --pad --type coverage_binned --max-depth=1000000 --chromosome=Pf3D7_13_v3 --start=74414 --end=2791900 --output=${NAME}_covchr13.tab ${LOCAT}
+
+  COVMED=$(tail -n +2 ${NAME}_covchr* | awk '{if ($3 >= 20) print $0}' | sort -n -k 4 | awk '{count[NR] = $4} END {if (NR%2) {print count[(NR+1)/2];} else {print (count[(NR/2)]+count[(NR/2)+1])/2.0}}')
+  #COVMED is the median pysamstat coverage of all reference regions:
+
+  rm ${NAME}_covchr*
+
+  #Coverage of HRP and neighboring gene#
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_08_v3 --start=1358314 --end=1359142 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_08_v3\t1358314\t1359142\tPF3D7_0831600\tCLAG8\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_08_v3 --start=1359287 --end=1359859 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_08_v3\t1359287\t1359859\tPF3D7_0831600\tCLAG8\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_08_v3 --start=1361249 --end=1362015 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_08_v3\t1361249\t1362015\tPF3D7_0831600\tCLAG8\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_08_v3 --start=1362197 --end=1363618 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_08_v3\t1362197\t1363618\tPF3D7_0831600\tCLAG8\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_08_v3 --start=1365467 --end=1367506 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_08_v3\t1365467\t1367506\tPF3D7_0831700\tHSP70x\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_08_v3 --start=1374236 --end=1375084 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_08_v3\t1374236\t1375084\tPF3D7_0831800\tHRP2\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_08_v3 --start=1375231 --end=1375299 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_08_v3\t1375231\t1375299\tPF3D7_0831800\tHRP2\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_08_v3 --start=1383349 --end=1384212 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_08_v3\t1383349\t1384212\tPF3D7_0832000\tstevor\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_08_v3 --start=1392407 --end=1393135 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_08_v3\t1392407\t1393135\tPF3D7_0832200\tPHISTa-like\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_13_v3 --start=2833204 --end=2834322 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_13_v3\t2833204\t2834322\tPF3D7_1372000\tPHISTa\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_13_v3 --start=2837313 --end=2839058 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_13_v3\t2837313\t2839058\tPF3D7_1372100\tPHISTb\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_13_v3 --start=2840727 --end=2841485 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_13_v3\t2840727\t2841485\tPF3D7_1372200\tHRP3\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_13_v3 --start=2841635 --end=2841703 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_13_v3\t2841635\t2841703\tPF3D7_1372200\tHRP3\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_13_v3 --start=2846002 --end=2846538 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_13_v3\t2846002\t2846538\tPF3D7_1372300\tPHIST\t" rc / NR }' >> HRPcov_${NAME}.temp
+  pysamstats --fasta ${REFFILE} --pad --truncate --type coverage --max-depth=1000000 --chromosome=Pf3D7_13_v3 --start=2850891 --end=2853482 ${LOCAT} | tail -n +2 | awk '{rc += $3} END {if (NR > 0) print "Pf3D7_13_v3\t2850891\t2853482\tPF3D7_1372400\tACS4\t" rc / NR }' >> HRPcov_${NAME}.temp
+
+  awk -v REFCOV="$COVMED" '{$7 = $6/(REFCOV/3); print;} END{print "Median coverage: " REFCOV/3;}' HRPcov_${NAME}.temp > HRPcov_${NAME}.txt
+  rm HRPcov_${NAME}.temp
+  grep ^Pf3D7 HRPcov_${NAME}.txt | awk -v FNAME="$NAME" -v CUT="$CUTOFF" -v FLOCAT="$LOCAT" '{if ($7 < CUT) print FNAME"\t"FLOCAT; }' >> suspectdel.temp
+
+  echo -e "Done: ${NAME}\n"
+done
+
+sort suspectdel.temp | uniq > suspectdel.txt
+rm suspectdel.temp
+
+#Normalized coverage of exons in HRP2 and HRP3 neigboring genes are listed in HRPcov_IsolateName.txt
+#Isolate names of the suspected HRP2 or HRP3 deletion are listed in suspectdel.txt
