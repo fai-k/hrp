@@ -1,4 +1,6 @@
-from __future__ import print_function
+#Calculate median coverage of each bam file
+#Required text file: input-namelocat.txt which contains "isolate name" (tab or space) "file location" in the same line
+#Required: pysam 0.11.2.2, pysamstats 1.0.1from __future__ import print_function
 import numpy as np
 import pysam
 import pysamstats as pss
@@ -19,6 +21,7 @@ core_win = [['Pf3D7_01_v3',92901,575900],
 	['Pf3D7_10_v3',68971,1571815],
 	['Pf3D7_11_v3',110001,2003320],
 	['Pf3D7_13_v3',74414,2791900]]
+###
 
 samples=[]
 with open(inputfile,'r') as f:
@@ -44,3 +47,4 @@ with open('%s.CovMed' % inputfile,'w') as f:
 	for p in range(0,len(samples)):
 		f.write('%s\t%s\t%.3f\n' % (samples[p][0], samples[p][1], cov_median[p]))
 
+#Median coverage is listed as the third column in "inputfile".CovMed with the same folder as input file
