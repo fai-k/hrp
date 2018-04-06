@@ -1,5 +1,5 @@
 #Check coverage for suspected HRP2/3 deletion
-#Required text file: input-namelocat.txt which contains "isolate name" (tab or space) "file location" in the same line
+#Required text file: input-namelocat.txt which contains "isolate name" (tab or space) "file location" (tab or space) "median coverage" in the same line
 #Required: pysam 0.11.2.2, pysamstats 1.0.1
 from __future__ import print_function
 import numpy as np
