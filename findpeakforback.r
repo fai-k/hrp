@@ -1,6 +1,6 @@
 library("quantmod")
 whole <- read.delim("D:/matetelo50match/telomate-split/20.cov", header=FALSE, stringsAsFactors=FALSE)
-tres <- 110
+tres <- 150
 for (j in 1:20) {
   peakfor <- findPeaks(whole[1:length(whole[, j +2]), j + 2],0)
   peakbak <- findPeaks(whole[length(whole[, j + 2]):1, j + 2],0)
@@ -102,6 +102,7 @@ for (j in 1:20) {
         peaksingle[k,] <- list(peakgroupbak[i,1], peakgroupbak[i,2], peakgroupbak[i,3], peakgroupbak[i,4], "bak(single)")
         k+1 -> k
       }
+      prev <- length(peakgroup[,1])
     }
     if (length(peaksingle[,1]) > 0){
       for (i in 1:length(peaksingle[,1])){
